@@ -25,8 +25,43 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    f = open(html_file, 'r')
+    content = f.read()
+    soup = BeautifulSoup(content, 'html.parser')
+    
+    title_tags = soup.find_all('div', class_ = "t1jojoys")
+    titles = []
+    for title in title_tags:
+        titles.append(title.text)
 
+    rent_tags = soup.find_all('span', class_ = "a8jt5op")
+    rents = []
+    for rent in rent_tags:
+        rents.append(rent.text)
+    pattern = r'^\$(\d+)'
+    rents_int = []
+    for rent in rents:
+        found = re.findall(pattern, rent)
+        for found_rent in found:
+            rents_int.append(int(found_rent))
+    
+    id_tags = soup.find_all('meta', itemprop = 'url')
+    id_links = []
+    for tag in id_tags:
+        id_links.append(tag.get('content', None))
+    
+    id_pattern = r'^www.airbnb.com/rooms/[plus\/]*(\d+)\?'
+    ids = []
+    for id_string in id_links:
+        found = re.findall(id_pattern, id_string)
+        for found_id in found:
+            ids.append(found_id)
+            
+    f.close()
+    
+    tup_list = zip(titles, rents_int, ids)
+    tup_list = list(tup_list)
+    return tup_list
 
 def get_listing_information(listing_id):
     """
@@ -147,11 +182,18 @@ class TestCases(unittest.TestCase):
         # check that the variable you saved after calling the function is a list
         self.assertEqual(type(listings), list)
         # check that each item in the list is a tuple
-
+        for item in listings:
+            self.assertIsInstance(item, tuple)
         # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
-
+        tup_1 = listings[0]
+        self.assertEqual(tup_1[0], 'Loft in Mission District')
+        self.assertEqual(tup_1[1], 210)
+        self.assertEqual(tup_1[2], '1944564')
         # check that the last title is correct (open the search results html and find it)
-        pass
+        tup_20 = listings[19]
+        self.assertEqual(tup_20[0], 'Guest suite in Mission District')
+        self.assertEqual(tup_20[1], 238)
+        self.assertEqual(tup_20[2], '32871760')
 
     def test_get_listing_information(self):
         html_list = ["1623609",

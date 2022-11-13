@@ -119,7 +119,7 @@ def get_listing_information(listing_id):
 
     num_bedroom_tags = soup.find_all('span')
     bedroom_pattern = r'^(\d)\sbedroom'
-    bedrooms = ""
+    bedrooms = 1
     for item in num_bedroom_tags:
         found = re.findall(bedroom_pattern, item.text)
         for found_bed in found:
@@ -174,8 +174,19 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
-
+    f = open(filename, "w")
+    s_list = sorted(data, key = lambda x: x[1])
+    header = "Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms"
+    f.write(f'{header}\n')
+    for item in s_list:
+        for i in range(len(item)):
+            if i != (len(item) - 1):
+                f.write(f'{item[i]},')
+            else:
+                f.write(f'{item[i]}\n')
+    f.close()
+    
+print(write_csv(get_detailed_listing_database("html_files/mission_district_search_results.html"),"proj2-salgado.csv"))
 
 def check_policy_numbers(data):
     """
@@ -302,11 +313,11 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
-
+        self.assertEqual(csv_lines[0], "Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms")
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
-
+        self.assertEqual(csv_lines[1], "Private room in Mission District,82,51027324,Pending,Private Room,1")
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
-
+        self.assertEqual(csv_lines[-1], "Apartment in Mission District,399,28668414,Pending,Entire Room,2")
         pass
 
     def test_check_policy_numbers(self):

@@ -99,12 +99,12 @@ def get_listing_information(listing_id):
     pol_pattern = r'^Policy number: ((?:\w|\d)*[\-]*\d+\w*)'
     found_num = re.findall(pol_pattern, policy_text)
     if len(found_num) == 0:
-        pol_pattern = r'Policy number: (?:P|p)ending'
+        pol_pattern = r'Policy number: .*(?:P|p)ending'
         found_num = re.findall(pol_pattern, policy_text)
         if len(found_num) == 0:
-            policy_num = "exempt"
+            policy_num = "Exempt"
         else:
-            policy_num = "pending"
+            policy_num = "Pending"
     else:
         policy_num = found_num[0]
     
@@ -186,7 +186,6 @@ def write_csv(data, filename):
                 f.write(f'{item[i]}\n')
     f.close()
     
-print(write_csv(get_detailed_listing_database("html_files/mission_district_search_results.html"),"proj2-salgado.csv"))
 
 def check_policy_numbers(data):
     """
@@ -207,8 +206,35 @@ def check_policy_numbers(data):
     ]
 
     """
-    pass
+    policy_num_list = []
+    for item in data:
+        info = (item[2], item[3])
+        policy_num_list.append(info)
+    
+    numbers = []
+    for tup in policy_num_list:
+        if (tup[1] != "Pending") and (tup[1] != "Exempt") :
+            numbers.append(tup)
 
+    valid_pattern = r'20\d{2}-00\d{4}STR|STR-000\d{4}'
+    final_list = []
+    for tup in numbers:
+        policy_num = tup[1]
+        found = re.findall(valid_pattern, policy_num)
+        for num in found:
+            final_list.append(num)
+
+    invalid_list = []
+    for tup in numbers:
+        if tup[1] not in final_list:
+            invalid_list.append(tup)
+
+    invalid_ids = []
+    for tup in invalid_list:
+        id = tup[0]
+        invalid_ids.append(id)
+    
+    return invalid_ids
 
 def extra_credit(listing_id):
     """
@@ -313,11 +339,11 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
-        self.assertEqual(csv_lines[0], "Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms")
+        self.assertEqual(csv_lines[0], "Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms".split(","))
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
-        self.assertEqual(csv_lines[1], "Private room in Mission District,82,51027324,Pending,Private Room,1")
+        self.assertEqual(csv_lines[1], "Private room in Mission District,82,51027324,Pending,Private Room,1".split(","))
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
-        self.assertEqual(csv_lines[-1], "Apartment in Mission District,399,28668414,Pending,Entire Room,2")
+        self.assertEqual(csv_lines[-1], "Apartment in Mission District,399,28668414,Pending,Entire Room,2".split(","))
         pass
 
     def test_check_policy_numbers(self):
@@ -329,10 +355,11 @@ class TestCases(unittest.TestCase):
         # check that the return value is a list
         self.assertEqual(type(invalid_listings), list)
         # check that there is exactly one element in the string
-
+        self.assertEqual(len(invalid_listings), 1)
         # check that the element in the list is a string
-
+        self.assertIsInstance(invalid_listings[0], str)
         # check that the first element in the list is '16204265'
+        self.assertEqual(invalid_listings[0], "16204265")
         pass
 
 
